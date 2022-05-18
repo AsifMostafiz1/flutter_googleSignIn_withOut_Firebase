@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_signinwithout_firebase/login_page.dart';
+import 'package:http/http.dart' as http;
 class HomePage extends StatefulWidget {
-   final GoogleSignInAccount user;
-   const HomePage({Key? key,required this.user}) : super(key: key);
+   GoogleSignInAccount user;
+   HomePage({Key? key,required this.user}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  
+
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,8 @@ class _HomePageState extends State<HomePage> {
           Text(widget.user.displayName.toString()),
 
           const SizedBox(height: 50,),
-          ElevatedButton(onPressed: ()async{
+          ElevatedButton(onPressed: (){
+
             GoogleSignIn googleSignIn = GoogleSignIn();
             googleSignIn.signOut().then((value) => Navigator.of(context).push(MaterialPageRoute(builder: (context)=>const LogInPage())));
           },

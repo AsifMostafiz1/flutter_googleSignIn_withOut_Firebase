@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_signinwithout_firebase/screen/apiTest.dart';
 import 'package:google_signinwithout_firebase/login_page.dart';
 
 void main(){
@@ -21,7 +22,7 @@ class _MyAppState extends State<MyApp> {
     return  const MaterialApp(
       title: 'Flutter Demo',
 
-      home: LogInPage(),
+      home: ApiTest(),
     );
   }
 }
