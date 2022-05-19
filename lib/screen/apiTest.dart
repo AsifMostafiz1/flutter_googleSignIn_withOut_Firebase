@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:google_signinwithout_firebase/model/product_model.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:google_signinwithout_firebase/provider.dart';
 import 'package:google_signinwithout_firebase/services/product_services.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class ApiTest extends StatefulWidget {
   const ApiTest({Key? key}) : super(key: key);
@@ -14,50 +15,45 @@ class ApiTest extends StatefulWidget {
 
 class _ApiTestState extends State<ApiTest> {
 
-  TextEditingController searchController = TextEditingController();
+
   ProductServices productServices = ProductServices();
-  ProductSearch? productSearch;
-
-  List<Results> productResultsList = [];
-  List<Results> productResultsListSearch = [];
-
-  Album? album;
+  ScrollController scrollController = ScrollController();
+  ProductProvider productProvider= ProductProvider();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getData();
+
   }
 
-  getData() async {
-    var value = await productServices.fetchAlbum();
-    var value2 = await productServices.httpRequest();
-    setState(() {
-      album = value;
-      productSearch = value2;
-      productResultsList = productSearch!.data!.products!.results!;
-      productResultsListSearch = productResultsList;
+  getData()  {
 
-    });
+    final providerData = Provider.of<ProductProvider>(context,listen: false);
+
+     providerData.getProduct();
+
   }
 
   @override
   Widget build(BuildContext context) {
+
+    final providerData = Provider.of<ProductProvider>(context);
     return SafeArea(
 
       child: Scaffold(
         appBar: AppBar(
 
         ),
-        backgroundColor: Colors.grey,
+
         body: Column(
 
           children: [
             Container(
-              margin: EdgeInsets.all(10),
+              margin: const EdgeInsets.all(10),
               height: 45,
-              padding: EdgeInsets.only(left: 20),
+              padding: const EdgeInsets.only(left: 20),
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -67,14 +63,16 @@ class _ApiTestState extends State<ApiTest> {
               child: TextFormField(
 
                 onChanged: (String value){
-                  setState(() {
-                    productResultsListSearch = productResultsList.where((element) =>
-                      element.brand!.slug!.startsWith(searchController.text)
-                    ).toList();
-                  });
+                  providerData.onChanged();
+                  // setState(() {
+                  //   // providerData.searchResultList = providerData.resultList
+                  //   //     .where((element) => element.brand!.slug!
+                  //   //     .startsWith(searchController.text.toLowerCase()))
+                  //   //     .toList();
+                  // });
 
                 },
-                    controller: searchController,
+                    controller: providerData.searchController,
                     decoration: const InputDecoration(
                       hintText: "Search Product here",
                       hintStyle: TextStyle(color: Colors.grey),
@@ -86,49 +84,65 @@ class _ApiTestState extends State<ApiTest> {
 
               ),
             ),
-            Container(
+            Expanded(
+              child: Container(
+                
+                child: providerData.isLoading==false?ListView.builder(
 
-              height: MediaQuery.of(context).size.height*.8,
-              width: MediaQuery.of(context).size.width,
-              child: productResultsListSearch.isNotEmpty?ListView.builder(
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      height: MediaQuery.of(context).size.height/5,
+                      width: MediaQuery.of(context).size.width,
 
-                itemBuilder: (context, index) {
+                      child: Card(
+                        child: Row(
+                          children: [
 
+                            Container(
+                              width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                    image: NetworkImage(providerData.searchResultList[index].image.toString())
+                                  )
+                                ),
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    height: MediaQuery.of(context).size.height/5,
-                    width: MediaQuery.of(context).size.width,
-
-                    child: Card(
-                      child: Row(
-                        children: [
-
-                          Container(
-                            width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                image: DecorationImage(
-                                  image: NetworkImage(productResultsList[index].image.toString())
-                                )
-                              ),
-
-                          ),
-                          Text(
-                            productResultsListSearch[index].brand!.name.toString(),
-                          ),
-                        ],
+                            ),
+                            Text(providerData.searchResultList[index].productName.toString()),
+                            Text(providerData.searchResultList.length.toString()),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-                itemCount: productResultsListSearch.length,
-              ):Container(child: const Center(
-                child: Text('No product Found'),
-              ),),
+                    );
+
+                  },
+                  itemCount: providerData.searchResultList.length,
+                ):providerData.isLoading?Container(child:  Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: const [
+
+                      SpinKitThreeBounce(color: Colors.blue,),
+                      SizedBox(height: 20,),
+                      Text("Loading Data.......")
+                    ],
+                  ),
+                ),):providerData.searchResultList.length<=10? Center(child:  Text("No Product Found"),):Container(),
+              ),
             ),
           ],
+        ),
+
+        floatingActionButton: FloatingActionButton(
+          onPressed: (){
+
+            providerData.pageIncrement();
+            getData();
+          },
+          child: const Text("Next"),
         ),
       ),
     );
